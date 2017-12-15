@@ -111,7 +111,7 @@ def gen_test_output(sess, logits, keep_prob, image_pl, data_folder, image_shape)
     :return: Output for for each test image
     """
     for image_file in glob(os.path.join(data_folder, 'image_2', '*.png')):
-        image = scipy.misc.imresize(scipy.misc.imread(image_file), image_shape)
+        image = sktf.resize(scipy.misc.imread(image_file), image_shape)
 
         im_softmax = sess.run(
             [tf.nn.softmax(logits)],
