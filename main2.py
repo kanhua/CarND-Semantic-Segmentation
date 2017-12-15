@@ -161,7 +161,8 @@ tests.test_train_nn(train_nn)
 def run():
     num_classes = 2
     image_shape = (160, 576)
-    data_dir = '/Users/kanhua/Downloads/udacity_data/'
+    #data_dir = '/Users/kanhua/Downloads/udacity_data/'
+    data_dir='./data'
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
 

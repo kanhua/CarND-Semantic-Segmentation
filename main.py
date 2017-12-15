@@ -144,8 +144,8 @@ tests.test_train_nn(train_nn)
 def run():
     num_classes = 2
     image_shape = (160, 576)
-    #data_dir = './data'
-    data_dir='/Users/kanhua/Downloads/udacity_data'
+    data_dir = './data'
+    #data_dir='/Users/kanhua/Downloads/udacity_data'
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
 
@@ -176,7 +176,7 @@ def run():
                                                         correct_label, learning_rate, num_classes)
 
         # TODO: Train NN using the train_nn function
-        train_nn(sess,1,30,get_batches_fn,train_op,cross_entropy_loss,input_image,
+        train_nn(sess,20,5,get_batches_fn,train_op,cross_entropy_loss,input_image,
                  correct_label,keep_prob,learning_rate)
 
         # TODO: Save inference data using helper.save_inference_samples
