@@ -196,7 +196,7 @@ def run():
 
 
         # Train NN using the train_nn function
-        train_nn(sess, 2, 10, get_batches_fn, train_op, cross_entropy_loss, input_image,
+        train_nn(sess, 50, 10, get_batches_fn, train_op, cross_entropy_loss, input_image,
                  correct_label, keep_prob, learning_rate, saver)
 
         # Save inference data using helper.save_inference_samples
@@ -209,7 +209,7 @@ def run():
 
         videogen = skvideo.io.vreader('./driving.mp4')
 
-        writer = skvideo.io.FFmpegWriter("./runs/results.mp4")
+        writer = skvideo.io.FFmpegWriter("./runs/results.mpg")
         for i,frame in enumerate(videogen):
             if i<5:
                 print("frame:",i)
