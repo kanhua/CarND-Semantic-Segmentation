@@ -207,7 +207,7 @@ def run():
 
         imp=helper.ImageProcess(sess,keep_prob,input_image,logits,image_shape)
 
-        videogen = skvideo.io.vreader('./data/driving.mp4')
+        videogen = skvideo.io.vreader('./driving.mp4')
 
         writer = skvideo.io.FFmpegWriter("./runs/results.mp4")
         for i,frame in enumerate(videogen):
