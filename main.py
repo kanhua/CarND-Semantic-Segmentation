@@ -143,7 +143,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
             _, loss = sess.run([train_op, cross_entropy_loss],
                                feed_dict={input_image: image, correct_label: label, keep_prob: 0.5,
                                           learning_rate: 0.001})
-            print("Loss: = {:.5f}".format(loss))
+            print("loss: = {:.5f}".format(loss))
         if saver is not None:
             saver.save(sess, './model_ckpt/model')
 
@@ -177,8 +177,6 @@ def run():
         # OPTIONAL: Augment Images for better results
         #  https://datascience.stackexchange.com/questions/5224/how-to-prepare-augment-images-for-neural-network
 
-        # TODO: Build NN using load_vgg, layers, and optimize function
-
         correct_label = tf.placeholder(tf.int32, [None, None, None, num_classes], name='correct_label')
         learning_rate = tf.placeholder(tf.float32, name='learning_rate')
 
@@ -209,7 +207,7 @@ def run():
 
         videogen = skvideo.io.vreader('./driving.mp4')
 
-        writer = skvideo.io.FFmpegWriter("./runs/results.mpg")
+        writer = skvideo.io.FFmpegWriter("./runs/results.mp4")
         for i,frame in enumerate(videogen):
             if i<5:
                 print("frame:",i)
@@ -219,11 +217,6 @@ def run():
         writer.close()
 
 
-        #clip = VideoFileClip('./data/driving.mp4')
-        #new_clip = clip.fl_image(imp.pipeline)
-
-        # write to file
-        #new_clip.write_videofile('./runs/result.mp4')
 
 
 if __name__ == '__main__':
