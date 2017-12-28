@@ -4,6 +4,7 @@ import helper
 import warnings
 from distutils.version import LooseVersion
 import project_tests as tests
+import skvideo.io
 
 # Check TensorFlow Version
 assert LooseVersion(tf.__version__) >= LooseVersion(
@@ -59,12 +60,15 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     # TODO: Implement function
 
     layer_7_conv_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same',
-                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
+                                        kernel_initializer=tf.random_normal_initializer(stddev=0.01))
 
     layer_7_out = tf.layers.conv2d_transpose(layer_7_conv_1x1, num_classes, 4, 2, padding='same',
+                                             kernel_initializer=tf.random_normal_initializer(stddev=0.01),
                                              kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
     layers_4_conv_1x1 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, padding='same',
+                                         kernel_initializer=tf.random_normal_initializer(stddev=0.01),
                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
     layers_4_out = tf.add(layers_4_conv_1x1, layer_7_out)
@@ -73,6 +77,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
                                             strides=2, padding='same')
 
     layer_3_conv_1x1 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, padding='same',
+                                        kernel_initializer=tf.random_normal_initializer(stddev=0.01),
                                         kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
     layer_3_add = tf.add(layer_4_up, layer_3_conv_1x1)
@@ -80,6 +85,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     final_output_layer = tf.layers.conv2d_transpose(layer_3_add,
                                                     num_classes, 16, strides=8,
                                                     padding='same',
+                                                    kernel_initializer=tf.random_normal_initializer(stddev=0.01),
                                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
     return final_output_layer
@@ -112,7 +118,7 @@ tests.test_optimize(optimize)
 
 
 def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
-             correct_label, keep_prob, learning_rate):
+             correct_label, keep_prob, learning_rate, saver=None):
     """
     Train neural network and print out the loss during training.
     :param sess: TF Session
@@ -125,6 +131,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param correct_label: TF Placeholder for label images
     :param keep_prob: TF Placeholder for dropout keep probability
     :param learning_rate: TF Placeholder for learning rate
+    :param saver: tf.train.Saver object
     """
     # TODO: Implement function
 
@@ -135,16 +142,21 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
         for image, label in get_batches_fn(batch_size):
             _, loss = sess.run([train_op, cross_entropy_loss],
                                feed_dict={input_image: image, correct_label: label, keep_prob: 0.5,
-                                          learning_rate: 0.0009})
+                                          learning_rate: 0.001})
             print("Loss: = {:.5f}".format(loss))
+        if saver is not None:
+            saver.save(sess, './model_ckpt/model')
 
 
 tests.test_train_nn(train_nn)
 
 
+
+
 def run():
     num_classes = 2
     image_shape = (160, 576)
+    # data_dir = './data'
     data_dir = './data'
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
@@ -175,14 +187,43 @@ def run():
         logits, train_op, cross_entropy_loss = optimize(layer_output,
                                                         correct_label, learning_rate, num_classes)
 
-        # TODO: Train NN using the train_nn function
-        train_nn(sess,1,5,get_batches_fn,train_op,cross_entropy_loss,input_image,
-                 correct_label,keep_prob,learning_rate)
+        # set up a saver object
+        saver = tf.train.Saver()
 
-        # TODO: Save inference data using helper.save_inference_samples
+        ckpt = tf.train.get_checkpoint_state('./model_ckpt/')
+        if ckpt and ckpt.model_checkpoint_path:
+            saver.restore(sess, ckpt.model_checkpoint_path)
+
+
+        # Train NN using the train_nn function
+        train_nn(sess, 2, 10, get_batches_fn, train_op, cross_entropy_loss, input_image,
+                 correct_label, keep_prob, learning_rate, saver)
+
+        # Save inference data using helper.save_inference_samples
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
 
         # OPTIONAL: Apply the trained model to a video
+        # Import everything needed to edit/save/watch video clips
+
+        imp=helper.ImageProcess(sess,keep_prob,input_image,logits,image_shape)
+
+        videogen = skvideo.io.vreader('./data/driving.mp4')
+
+        writer = skvideo.io.FFmpegWriter("./runs/results.mp4")
+        for i,frame in enumerate(videogen):
+            if i<5:
+                print("frame:",i)
+                new_frame=imp.pipeline(frame)
+                writer.writeFrame(new_frame)
+
+        writer.close()
+
+
+        #clip = VideoFileClip('./data/driving.mp4')
+        #new_clip = clip.fl_image(imp.pipeline)
+
+        # write to file
+        #new_clip.write_videofile('./runs/result.mp4')
 
 
 if __name__ == '__main__':
